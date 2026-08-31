@@ -28,9 +28,10 @@ public class WiadomosciRepository(AppDbContext context) : IWiadomosciRepository
     public async Task<ICollection<WiadomoscDto>> GetWiadomosciPrywatne(int idUzytkownika1, int idUzytkownika2)
     {
         var wiadomosci = await context.Wiadomosc
-            .Where(x => (x.IdTypuWiadomosci == (int)TypWiadomosciEnum.Prywatna &&
-                                   x.IdNadawcy == idUzytkownika1 && x.IdOdbiorcy == idUzytkownika2) ||
+            .Where(x => x.IdTypuWiadomosci == (int)TypWiadomosciEnum.Prywatna &&
+                                   ((x.IdNadawcy == idUzytkownika1 && x.IdOdbiorcy == idUzytkownika2) ||
                                   (x.IdNadawcy == idUzytkownika2 && x.IdOdbiorcy == idUzytkownika1))
+            )
             .ToListAsync();
         wiadomosci.Sort((x,y) => x.DataWyslania.CompareTo(y.DataWyslania));
         return wiadomosci.Select(wiadomosc => new WiadomoscDto(
