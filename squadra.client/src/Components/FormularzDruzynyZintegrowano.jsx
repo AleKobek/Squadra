@@ -689,7 +689,7 @@ export default function FormularzDruzynyZintegrowano({
                     disabled={!idStatystykiDoDodania || idStatystykiDoDodania < 0 || !wartoscStatystykiDoDodania}
                 >Dodaj</button>
             </div>
-            <div>
+            <div className="flex items-end justify-center gap-5">
                 <label>
                     Wymaganie w postaci rangi: <br/>
                     <div className="flex gap-2">
