@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.FileProviders;
 using Squadra.Server.Context;
 using Squadra.Server.Modules.BibliotekaGier;
 using Squadra.Server.Modules.Drużyny;
@@ -16,6 +17,10 @@ using Squadra.Server.Modules.WspieraneGry;
 using Squadra.Server.Modules.Znajomosci;
 
 var builder = WebApplication.CreateBuilder(args);
+builder.WebHost.ConfigureKestrel(options =>
+{
+    options.ListenAnyIP(5014);
+});
 
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
@@ -94,7 +99,10 @@ builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowFrontend", policy =>
     {
-        policy.WithOrigins("http://localhost:3000")
+        policy.SetIsOriginAllowed(origin =>
+            Uri.TryCreate(origin, UriKind.Absolute, out var uri) &&
+            uri.Scheme == Uri.UriSchemeHttp &&
+            uri.Port == 3000)
             .AllowAnyHeader()
             .AllowAnyMethod()
             .AllowCredentials();
@@ -102,6 +110,23 @@ builder.Services.AddCors(options =>
 });
 
 var app = builder.Build();
+
+var clientBuildPath = Path.GetFullPath(Path.Combine(builder.Environment.ContentRootPath, "..", "squadra.client", "build"));
+var clientBuildExists = Directory.Exists(clientBuildPath);
+var clientBuildFileProvider = clientBuildExists ? new PhysicalFileProvider(clientBuildPath) : null;
+
+if (clientBuildFileProvider is not null)
+{
+    app.UseDefaultFiles(new DefaultFilesOptions
+    {
+        FileProvider = clientBuildFileProvider
+    });
+
+    app.UseStaticFiles(new StaticFileOptions
+    {
+        FileProvider = clientBuildFileProvider
+    });
+}
 
 
 if (app.Environment.IsDevelopment())
@@ -111,13 +136,20 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
-app.UseHttpsRedirection();
-
 app.UseCors("AllowFrontend");
 app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
+
+if (clientBuildExists)
+{
+    app.MapFallback(async context =>
+    {
+        context.Response.ContentType = "text/html; charset=utf-8";
+        await context.Response.SendFileAsync(Path.Combine(clientBuildPath, "index.html"));
+    });
+}
 
 // dodajemy role
 using (var scope = app.Services.CreateScope())
