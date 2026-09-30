@@ -1,5 +1,5 @@
 # Introduction
-The application allows users to communicate with a server via a browser to create an account and join small groups, which may have requirements for potential members. The application targets video games players.
+The application allows users to communicate with a server via a browser to create an account and join small groups, which may have requirements for potential members. The application targets video game players.
 
 Code and UI is written in polish, english branch is in progress.
 
